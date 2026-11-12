@@ -6,15 +6,35 @@ Run:  python3 reconcile.py
 """
 import json
 
+latest_by_txn = {}
+
+with open("payments.jsonl", encoding="utf-8") as f:
+    for line in f:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            event = json.loads(line)
+        except (json.JSONDecodeError, ValueError):
+            continue  # unreadable line, per the README
+
+        txn_id = event.get("txn_id")
+        if not txn_id:
+            continue  # event without a txn_id, per the README
+
+        existing = latest_by_txn.get(txn_id)
+        if existing is None or event["ts"] > existing["ts"]:
+            latest_by_txn[txn_id] = event
+
 total = 0.0
 count = 0
-
-with open("payments.jsonl") as f:
-    for line in f:
-        event = json.loads(line)
-        if event["status"] == "success":
-            total += float(event["amount"])
-            count += 1
+for event in latest_by_txn.values():
+    if event["status"] == "success":
+        amount = event["amount"]
+        if isinstance(amount, str):
+            amount = amount.replace(",", "")
+        total += float(amount)
+        count += 1
 
 with open("expected.txt") as f:
     expected = int(f.read().strip())
