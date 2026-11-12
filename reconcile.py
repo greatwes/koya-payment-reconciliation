@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
 """Payment reconciliation.
-
 Reads payments.jsonl and works out how much money we actually collected.
 Run:  python3 reconcile.py
 """
@@ -16,11 +14,11 @@ with open("payments.jsonl", encoding="utf-8") as f:
         try:
             event = json.loads(line)
         except (json.JSONDecodeError, ValueError):
-            continue  # unreadable line, per the README
+            continue 
 
         txn_id = event.get("txn_id")
         if not txn_id:
-            continue  # event without a txn_id, per the README
+            continue  
 
         existing = latest_by_txn.get(txn_id)
         if existing is None or event["ts"] > existing["ts"]:
